@@ -9,16 +9,6 @@ const nextConfig = {
       },
     ],
   },
-  experimental: {
-    serverComponentsExternalPackages: ['undici']
-  },
-  webpack: (config) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      undici: require.resolve('undici')
-    }
-    return config
-  }
 };
 
 const withPWA = require("next-pwa")({
