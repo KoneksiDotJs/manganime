@@ -1,6 +1,6 @@
 import { useFetch } from "@/fetcher/useFetch";
 import { NextRequest, NextResponse } from "next/server";
-import cheerio from "cheerio";
+import {load} from "cheerio";
 
 export const GET = async (req: NextRequest) => {
   const pages = [1, 2, 3, 4];
@@ -13,7 +13,7 @@ export const GET = async (req: NextRequest) => {
 
       if (status !== 200) throw new Error(`Error ${status}`);
 
-      const $ = cheerio.load(data);
+      const $ = load(data);
       const $parentElement = $(
         "#venkonten > div > div.venser > div.venutama > div.rseries > div > div.venz > ul > li"
       );

@@ -1,101 +1,154 @@
-import Image from "next/image";
+"use client";
+import Script from "next/script";
+import axios from "axios";
+import Card from "@/components/Card";
+import { useEffect, useState } from "react";
+import { Episode } from "@/types/episode";
+import Loading from "@/components/Loading";
+import { Analytics } from "@vercel/analytics/react";
+import Swal from "sweetalert2";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [episode, setEpisode] = useState<Episode[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [category, setCategory] = useState<string>("new");
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+  const getEpisodes = async (category: string) => {
+    setLoading(true);
+    try {
+      const { data } = await axios.get(`/api/${category}`);
+      setEpisode(data.data);
+    } catch (error: any) {
+      console.log(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCategoryChange = (selectedCategory: string) => {
+    setCategory(selectedCategory);
+    getEpisodes(selectedCategory);
+  };
+
+  useEffect(() => {
+    getEpisodes(category);
+
+    // Periksa apakah popup sudah ditampilkan sebelumnya dalam sesi ini
+    const popupShownBefore = sessionStorage.getItem("popupShown");
+
+    // Tampilkan popup jika belum pernah ditampilkan dalam sesi ini
+    if (!popupShownBefore) {
+      showPopup();
+      // Set status popupShown ke 'true' dalam session storage
+      sessionStorage.setItem("popupShown", "true");
+    }
+
+    const cleanupOnUnload = () => {
+      // Kosongkan status popupShown saat pengguna meninggalkan halaman
+      if (sessionStorage.getItem("popupShown")) {
+        sessionStorage.removeItem("popupShown");
+      }
+    };
+
+    window.addEventListener("unload", cleanupOnUnload);
+
+    return () => {
+      window.removeEventListener("unload", cleanupOnUnload);
+    };
+  }, [category]);
+
+  const showPopup = () => {
+    // Quotes popup, ubah lewat .env
+    const kata1 = process.env.NEXT_PUBLIC_KATA_1;
+    const kata2 = process.env.NEXT_PUBLIC_KATA_2;
+    const kata3 = process.env.NEXT_PUBLIC_KATA_3;
+    const tombol = process.env.NEXT_PUBLIC_TOMBOL;
+    const gambar = process.env.NEXT_PUBLIC_GAMBAR;
+
+    // Create SweetAlert popup
+    Swal.fire({
+      //title: 'Halo kak!',
+      //icon: 'warning',
+      html: `
+        <center>
+          <img src="${gambar}" alt="gepeng" width="260px">
+          <p class="text-sm md:text-lg text-gray-500 font-bold">${kata1}</p>
+          <p class="text-sm md:text-lg text-gray-500 font-bold">${kata2}</p>
+          <p class="text-sm md:text-lg text-gray-500 font-bold">${kata3}</p>
+        </center>`,
+      showCancelButton: false,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: tombol,
+      background: "#2D2D2D", // Warna latar belakang gelap
+      customClass: {
+        title: "text-white",
+        htmlContainer: "text-white",
+        popup: "bg-gray-800", // Warna pop-up gelap
+        confirmButton:
+          "bg-blue-500 text-white px-2 py-1 rounded-md md:px-4 md:py-2 md:text-lg focus:outline-none",
+        cancelButton:
+          "bg-red-500 text-white px-2 py-1 rounded-md md:px-4 md:py-2 md:text-lg focus:outline-none",
+      },
+      //}).then((result) => {
+      //  if (result.isConfirmed) {
+      //    Swal.fire(
+      //      'Halo kak!',
+      //      'Jangan lupa bernafas :D',
+      //      'success'
+      //    );
+      //  }
+    });
+  };
+
+  return (
+    <div className="container pt-4 pb-10">
+      <Analytics />
+      <Script
+        strategy="lazyOnload"
+        src={`https://www.googletagmanager.com/gtag/js?id=G-TT2D2MBVGW`}
+      />
+      <Script strategy="lazyOnload" id="google-analytics">
+        {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-TT2D2MBVGW');
+        `}
+      </Script>
+
+      <div className="flex justify-between">
+        <h1
+          className={`bg-zinc-900 w-max text-white text-base px-4 py-1 rounded-md my-4 cursor-pointer clickAnimation ${
+            category === "new" ? "opacity-100" : "opacity-70"
+          }`}
+          onClick={() => handleCategoryChange("new")}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          Anime ongoing
+        </h1>
+        <h1
+          className={`bg-zinc-900 w-max text-white text-base px-4 py-1 rounded-md my-4 cursor-pointer clickAnimation ${
+            category === "new-finish" ? "opacity-100" : "opacity-70"
+          }`}
+          onClick={() => handleCategoryChange("new-finish")}
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
+          Selesai tayang
+        </h1>
+      </div>
+
+      {loading ? <Loading /> : null}
+
+      <div className="flex justify-center flex-wrap gap-2">
+        {episode.map((item) => (
+          <Card
+            key={item.id}
+            id={item.id}
+            title={item.title}
+            thumbnail={item.thumbnail}
+            episode={item.episode}
           />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        ))}
+      </div>
     </div>
   );
 }
